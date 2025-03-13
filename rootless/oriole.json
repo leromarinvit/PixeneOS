@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "full": {
+    "location_ota": "https://github.com/pixincreate/PixeneOS/releases/download/2025030900/oriole-2025030900-rootless-bf808ef.zip",
+    "location_csig": "https://github.com/pixincreate/PixeneOS/releases/download/2025030900/oriole-2025030900-rootless-bf808ef.zip.csig"
+  }
+}
