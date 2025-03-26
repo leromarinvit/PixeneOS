@@ -137,16 +137,14 @@ jobs:
                 echo -e "  - $missing_asset"
               done
 
-              # Grep always throws an error stating it cannot find the file or directory
-              valid_build=""
-              for missing_asset in "${missing_assets[@]}"; do
-                for flavor in $build_flavor; do
-                  if [[ $missing_asset == *"$flavor"* ]]; then
-                    valid_build="$valid_build $flavor"
-                    break
-                  fi
-                done
+              missing_build=()
+              for flavor in $build_flavor; do
+                if [[ "${missing_assets[@]}" =~ $flavor ]]; then
+                  missing_build+=("$flavor")
+                fi
               done
+
+              valid_build="${missing_build[@]}"
 
               # Check if valid_build is not empty
               if [[ -n "$valid_build" ]]; then
