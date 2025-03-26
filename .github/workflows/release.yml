@@ -151,6 +151,7 @@ jobs:
               # Check if valid_build is not empty
               if [[ -n "$valid_build" ]]; then
                 echo -e "Proceeding with build to create missing assets..."
+                echo "BUILD_FLAVOR=$valid_build" >> $GITHUB_ENV
               else
                 echo -e "::error::Asset with \`$build_flavor\` flavor already exists!"
                 exit 1
