@@ -47,6 +47,7 @@ jobs:
         run: |
           # Convert inputs to proper boolean values
           root=${{ github.event.inputs.root }}
+          rootless=${{ github.event.inputs.rootless }}
           magisk_preinit_device=${{ github.event.inputs.magisk-preinit-device }}
 
           # Ensure that the boolean comparison is correctly handled
