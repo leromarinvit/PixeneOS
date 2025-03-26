@@ -197,20 +197,22 @@ jobs:
           echo -e "Running release script.."
 
           for flavor in $BUILD_FLAVOR; do
-            if [[ $flavor == magisk ]]; then
-              export ADDITIONALS_ROOT=true
-            else
-              export ADDITIONALS_ROOT=false
-            fi
+            (
+              if [[ $flavor == magisk ]]; then
+                export ADDITIONALS_ROOT=true
+              else
+                export ADDITIONALS_ROOT=false
+              fi
 
-            # Instead of running the script directly,
-            # we source it to get the variables in the current shell and use them in the next steps by exporting them
-            . src/main.sh
+              # Instead of running the script directly,
+              # we source it to get the variables in the current shell and use them in the next steps by exporting them
+              . src/main.sh
 
-            # Rename $DEVICE_NAME.json so it doesn't get overwritten
-            mv $DEVICE_NAME.json $DEVICE_NAME-$flavor.json
+              # Rename $DEVICE_NAME.json so it doesn't get overwritten
+              mv $DEVICE_NAME.json $DEVICE_NAME-$flavor.json
 
-            echo "OUTPUTS_PATCHED_OTA_$flavor=${OUTPUTS[PATCHED_OTA]}" >> $GITHUB_OUTPUT
+              echo "OUTPUTS_PATCHED_OTA_$flavor=${OUTPUTS[PATCHED_OTA]}" >> $GITHUB_OUTPUT
+            )
           done
 
       - name: Generate Changelog
