@@ -82,6 +82,7 @@ jobs:
           echo "BUILD_FLAVOR=${BUILD_FLAVOR}" >> $GITHUB_ENV
 
       - name: Check if a build exists already and verify assets
+        id: check_build_exists
         shell: bash
         run: |
           # Device name is a required parameter
@@ -89,6 +90,8 @@ jobs:
             echo -e "::error::Missing required param \`DEVICE_NAME\`"
             exit 1
           fi
+
+          echo "continue=true" >> $GITHUB_OUTPUT
 
           # Fetch the latest GrapheneOS version and set up the environment
           source src/fetcher.sh && get_latest_version
@@ -129,8 +132,9 @@ jobs:
             done
 
             if [ ${#missing_assets[@]} -eq 0 ]; then
-              echo -e "::error::All required assets are present. Exiting..."
-              exit 1
+              echo -e "::notice::All required assets are present. Exiting..."
+              echo "continue=false" >> $GITHUB_OUTPUT
+              exit
             else
               echo -e "Missing assets:"
               for missing_asset in "${missing_assets[@]}"; do
@@ -151,8 +155,9 @@ jobs:
                 echo -e "Proceeding with build to create missing assets..."
                 echo "BUILD_FLAVOR=$valid_build" >> $GITHUB_ENV
               else
-                echo -e "::error::Asset with \`$build_flavor\` flavor already exists!"
-                exit 1
+                echo -e "::notice::Asset with \`$build_flavor\` flavor already exists!"
+                echo "continue=false" >> $GITHUB_OUTPUT
+                exit
               fi
             fi
           else
@@ -160,24 +165,29 @@ jobs:
           fi
 
       - name: Setup Git
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         run: |
           # Configure git for pushing changes
           git config --global user.email ${{ secrets.EMAIL }} && git config --global user.name PiX
 
       - name: Install Rust stable
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable 2 weeks ago
 
       - name: Build and Cache Rust Dependencies
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         uses: Swatinem/rust-cache@v2.7.8
 
       - name: Install Python
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.12-dev"
 
       - name: Setup Environment variables
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         run: |
           echo "KEYS_AVB_BASE64=${{ secrets.AVB_KEY }}" >> $GITHUB_ENV
           echo "KEYS_CERT_OTA_BASE64=${{ secrets.CERT_OTA }}" >> $GITHUB_ENV
@@ -185,6 +195,7 @@ jobs:
 
       - name: Patch OTA
         id: patch_ota
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         shell: bash
         env:
           CLEANUP: true
@@ -216,11 +227,13 @@ jobs:
           done
 
       - name: Generate Changelog
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         run: |
           # Generate a changelog for the release taking the latest GrapheneOS release
           echo -e "See [Changelog](https://grapheneos.org/releases#${{ env.GRAPHENEOS_VERSION }})." > ${{ github.workspace }}-CHANGELOG.txt
 
       - name: Make Release
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         uses: softprops/action-gh-release@v2
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
@@ -229,6 +242,7 @@ jobs:
           tag_name: "${{ env.GRAPHENEOS_VERSION }}"
 
       - name: Publish OTA to server
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         shell: bash
         run: |
           CURRENT_COMMIT=$(git rev-parse --short HEAD)
