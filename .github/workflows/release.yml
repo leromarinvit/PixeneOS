@@ -224,8 +224,8 @@ jobs:
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
           files: |
-            ${{ join(steps.patch_ota.outputs.*, '\n') }}
-            ${{ join(steps.patch_ota.outputs.*, '.csig\n') }}.csig
+            ${{ join(steps.patch_ota.outputs.*, "\n") }}
+            ${{ join(steps.patch_ota.outputs.*, ".csig\n") }}.csig
           name: "${{ env.GRAPHENEOS_VERSION }}"
           tag_name: "${{ env.GRAPHENEOS_VERSION }}"
 
