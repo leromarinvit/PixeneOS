@@ -193,7 +193,6 @@ jobs:
           PASSPHRASE_AVB: ${{ secrets.PASSPHRASE_AVB }}
           PASSPHRASE_OTA: ${{ secrets.PASSPHRASE_OTA }}
         run: |
-          set -x
           echo -e "Running release script.."
 
           for flavor in $BUILD_FLAVOR; do
