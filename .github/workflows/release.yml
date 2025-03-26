@@ -195,6 +195,8 @@ jobs:
         run: |
           echo -e "Running release script.."
 
+          mkdir release_files
+
           for flavor in $BUILD_FLAVOR; do
             (
               if [[ $flavor == magisk ]]; then
@@ -210,7 +212,7 @@ jobs:
               # Rename $DEVICE_NAME.json so it doesn't get overwritten
               mv $DEVICE_NAME.json $DEVICE_NAME-$flavor.json
 
-              echo "OUTPUTS_PATCHED_OTA_$flavor=${OUTPUTS[PATCHED_OTA]}" >> $GITHUB_OUTPUT
+              mv ${OUTPUTS[PATCHED_OTA]} ${OUTPUTS[PATCHED_OTA]}.csig release_files/
             )
           done
 
@@ -223,9 +225,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
-          files: |
-            ${{ join(steps.patch_ota.outputs.*, "\n") }}
-            ${{ join(steps.patch_ota.outputs.*, ".csig\n") }}.csig
+          files: release_files/*
           name: "${{ env.GRAPHENEOS_VERSION }}"
           tag_name: "${{ env.GRAPHENEOS_VERSION }}"
 
