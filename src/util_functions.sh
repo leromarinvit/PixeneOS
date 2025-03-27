@@ -473,7 +473,7 @@ function check_toml_env() {
       echo -e "Found variables in \`${toml_file}\` and will take precedence over other values.\n"
       for key in "${!config_vars[@]}"; do
         echo -e "${key}: ${config_vars[$key]}"
-        eval "${key}=${config_vars[$key]}"
+        eval "${key}=\"${config_vars[$key]}\""
       done
     else
       echo -e "Failed to find the required variables in \`${toml_file}\`.\n"
