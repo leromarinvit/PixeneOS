@@ -63,7 +63,9 @@ jobs:
           if [ "$rootless" == "true" ]; then
             BUILD_FLAVOR="$BUILD_FLAVOR rootless"
           fi
+
           echo "BUILD_FLAVOR=${BUILD_FLAVOR}" >> $GITHUB_ENV
+          echo "MAGISK_PREINIT=${magisk_preinit_device}" >> $GITHUB_ENV
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,6 +82,12 @@ jobs:
           echo "DEVICE_NAME=${DEVICE_NAME}" >> $GITHUB_ENV
           echo "GRAPHENEOS_UPDATE_CHANNEL=${GRAPHENEOS[UPDATE_CHANNEL]}" >> $GITHUB_ENV
           echo "BUILD_FLAVOR=${BUILD_FLAVOR}" >> $GITHUB_ENV
+          echo "MAGISK_PREINIT=${MAGISK_PREINIT}" >> $GITHUB_ENV
+
+          if [ "$BUILD_FLAVOR" =~ "magisk" ] && [ -z "$MAGISK_PREINIT" ]; then
+            echo -e "::error:: MAGISK_PREINIT is required if magisk flavor should be built."
+            exit 1
+          fi
 
       - name: Check if a build exists already and verify assets
         id: check_build_exists
@@ -199,7 +207,6 @@ jobs:
         shell: bash
         env:
           CLEANUP: true
-          MAGISK_PREINIT: ${{ github.event.inputs.magisk-preinit-device }}
           PASSPHRASE_AVB: ${{ secrets.PASSPHRASE_AVB }}
           PASSPHRASE_OTA: ${{ secrets.PASSPHRASE_OTA }}
         run: |
