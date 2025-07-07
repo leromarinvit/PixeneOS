@@ -186,7 +186,7 @@ jobs:
 
       - name: Build and Cache Rust Dependencies
         if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
-        uses: Swatinem/rust-cache@v2.7.8
+        uses: Swatinem/rust-cache@v2.8.0
 
       - name: Install Python
         if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
