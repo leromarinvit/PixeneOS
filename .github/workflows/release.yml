@@ -262,9 +262,8 @@ jobs:
           tag_name: "${{ env.GRAPHENEOS_VERSION }}"
 
       - name: Publish OTA to server
-        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }} && github.event.inputs.release-type != 'build-only'
         shell: bash
-        if: github.event.inputs.release-type != 'build-only'
         run: |
           CURRENT_COMMIT=$(git rev-parse --short HEAD)
           FLAVOR=("magisk" "rootless")
