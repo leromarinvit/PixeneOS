@@ -253,9 +253,8 @@ jobs:
           echo -e "See [Changelog](https://grapheneos.org/releases#${{ env.GRAPHENEOS_VERSION }})." > ${{ github.workspace }}-CHANGELOG.txt
 
       - name: Make Release
-        if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
+        if: ${{ steps.check_build_exists.outputs.continue == 'true' }} && github.event.inputs.release-type != 'build-only'
         uses: softprops/action-gh-release@v2
-        if: github.event.inputs.release-type != 'build-only'
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
           files: release_files/*
