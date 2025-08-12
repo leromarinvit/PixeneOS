@@ -77,7 +77,7 @@ jobs:
           echo "MAGISK_PREINIT=${magisk_preinit_device}" >> $GITHUB_ENV
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # Allow for switching to github-pages branch
           fetch-depth: 0
