@@ -107,8 +107,6 @@ jobs:
             exit 1
           fi
 
-          echo "continue=true" >> $GITHUB_OUTPUT
-
           # Fetch the latest GrapheneOS version and set up the environment
           source src/fetcher.sh && get_latest_version
           echo "GRAPHENEOS_VERSION=${VERSION[GRAPHENEOS]}" >> $GITHUB_ENV
@@ -120,6 +118,8 @@ jobs:
         run: |
           # Determine if the build is based on magisk, rootless, or both (build flavor)
           build_flavor=${BUILD_FLAVOR}
+
+          echo "continue=true" >> $GITHUB_OUTPUT
 
           # Check if the tag exists
           if git show-ref --tags $GRAPHENEOS_VERSION --quiet; then
