@@ -99,7 +99,6 @@ jobs:
           fi
 
       - name: Set GrapheneOS version
-        id: check_build_exists
         shell: bash
         run: |
           # Device name is a required parameter
@@ -115,6 +114,7 @@ jobs:
           echo "GRAPHENEOS_VERSION=${VERSION[GRAPHENEOS]}" >> $GITHUB_ENV
 
       - name: Check if a build exists already and verify assets
+        id: check_build_exists
         shell: bash
         if: github.event_name == 'schedule' || github.event.inputs.release-type == 'default'
         run: |
