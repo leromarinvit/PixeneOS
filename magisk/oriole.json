@@ -1,7 +1,7 @@
 {
   "version": 2,
   "full": {
-    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2025112100/oriole-2025112100-magisk-30400-6c7a4b8.zip",
-    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2025112100/oriole-2025112100-magisk-30400-6c7a4b8.zip.csig"
+    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2025120400/oriole-2025120400-magisk-30400-7bbdc2b.zip",
+    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2025120400/oriole-2025120400-magisk-30400-7bbdc2b.zip.csig"
   }
 }
