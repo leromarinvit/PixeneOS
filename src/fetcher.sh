@@ -11,7 +11,6 @@ function get_latest_version() {
     git ls-remote --tags "${DOMAIN}/${MAGISK[REPOSITORY]}.git" |
       awk -F'\t' '{print $2}' |
       grep -E 'refs/tags/' |
-      grep -E 'canary-' |
       sed 's/refs\/tags\///' |
       sort -V |
       tail -n1 |
