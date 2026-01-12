@@ -64,8 +64,10 @@ function check_and_download_dependencies() {
   if [[ "${ADDITIONALS[ROOT]}" == 'true' ]]; then
     RETRY_COUNT=0 # Reset retry count for magisk
     while true; do
-      # Magisk is an exception as it is an APK and hecne we do the get call directly and verif its existence
-      get "magisk" "${MAGISK[URL]}/releases/download/canary-${VERSION[MAGISK]}/app-release.apk"
+      # Magisk is an exception as it is an APK and hence we do the get call directly and verify
+      URL="${MAGISK[URL]}/releases/download/${VERSION[MAGISK]}/app-release.apk"
+      echo "echo -e "URL for \`${repository}\`: ${URL}"
+      get "magisk" "${URL}"
       verify_downloads "magisk"
 
       [[ "${ADDITIONALS[RETRY]}" == "true" ]] && [[ "${RETRY}" == "true" ]] || break
@@ -228,6 +230,9 @@ function patch_ota() {
     else
       echo -e "Magisk is not enabled. Skipping...\n"
     fi
+
+    # Have to clear storage space because, `csig` results in storage runout
+    rm -rf ${WORKDIR}/extracted/extracts/
 
     # Python command to run the patch script
     python ${my_avbroot_setup}/patch.py "${args[@]}"

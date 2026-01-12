@@ -159,19 +159,13 @@ It is easier to use the web installer to flash GrapheneOS. However, it is recomm
    fastboot flash avb_custom_key /path/to/avb_pkmd.bin
    ```
 
-5. **[Optional]** Before locking the bootloader, reboot into Android to confirm proper signing.
-
-   Install the Magisk or KernelSU app and run:
-
-   ```shell
-   adb shell su -c 'dmesg | grep libfs_avb'
-   ```
-
-   If AVB is working, you should see:
-
-   ```shell
-   init: [libfs_avb]Returning avb_handle with status: Success
-   ```
+5. Sideload the OTA (This helps avoid or reduce the possibility of running into the `Device is corrupt. It can't be trusted` error).
+   - Run `fastboot reboot recovery` to get into recovery mode
+   - An Android icon lying down with the text `No command` should be visible on the screen
+   - Hold the power button and press the volume up button a single time to get into the recovery UI
+   - Using the volume buttons, navigate to `Apply update from ADB` and select it with the power button
+   - As the recovery prompt says, use `adb sideload /path/to/ota.zip.patched` to sideload the patched OTA
+   - After the sideload completes, select 'Reboot to bootloader'
 
 6. Reboot into fastboot and lock the bootloader. This will trigger a data wipe.
 

@@ -13,8 +13,7 @@ function get_latest_version() {
       grep -E 'refs/tags/' |
       sed 's/refs\/tags\///' |
       sort -V |
-      tail -n1 |
-      sed 's/canary-//'
+      tail -n1
   )
 
   if [[ GRAPHENEOS[UPDATE_TYPE] == "install" ]]; then
@@ -66,13 +65,13 @@ function get() {
     fi
 
     # Download the files directly to modules directory
-    curl -sL "${url}" --output "${WORKDIR}/modules/${filename}.${suffix}"
+    curl -sLf "${url}" --output "${WORKDIR}/modules/${filename}.${suffix}"
 
     if [[ "${filename}" != "my-avbroot-setup" ]]; then
       # Download signatures
       if [ -n "${signature_url}" ]; then
         echo "Downloading signature for \`${filename}\`..."
-        curl -sL "${signature_url}" --output "${WORKDIR}/signatures/${filename}.zip.sig"
+        curl -sLf "${signature_url}" --output "${WORKDIR}/signatures/${filename}.zip.sig"
       fi
 
       # afsr, avbroot and custota-tool are binaries that need to be extracted and granted permissions
