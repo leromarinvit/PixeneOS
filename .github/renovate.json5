@@ -18,6 +18,17 @@
       customType: "regex",
       fileMatch: ["src/declarations.sh"],
       matchStrings: [
+        'VERSION\\[AVBROOT_SETUP\\]=\\"(?<currentDigest>.*?)\\"',
+      ],
+      depNameTemplate: "https://github.com/chenxiaolong/my-avbroot-setup.git",
+      datasourceTemplate: "git-refs",
+      currentValueTemplate: "master",
+      versioningTemplate: "sha",
+    },
+    {
+      customType: "regex",
+      fileMatch: ["src/declarations.sh"],
+      matchStrings: [
         'VERSION\\[CUSTOTA\\]=\\"\\$\\{VERSION\\[CUSTOTA\\]:-(?<currentValue>.*?)\\}"',
       ],
       depNameTemplate: "chenxiaolong/Custota",
