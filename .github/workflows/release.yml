@@ -77,7 +77,7 @@ jobs:
           echo "MAGISK_PREINIT=${magisk_preinit_device}" >> $GITHUB_ENV
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Allow for switching to github-pages branch
           fetch-depth: 0
@@ -210,9 +210,15 @@ jobs:
       - name: Setup Environment variables
         if: ${{ steps.check_build_exists.outputs.continue == 'true' }}
         run: |
-          echo "KEYS_AVB_BASE64=${{ secrets.AVB_KEY }}" >> $GITHUB_ENV
-          echo "KEYS_CERT_OTA_BASE64=${{ secrets.CERT_OTA }}" >> $GITHUB_ENV
-          echo "KEYS_OTA_BASE64=${{ secrets.OTA_KEY }}" >> $GITHUB_ENV
+          echo "KEYS_AVB_BASE64<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.AVB_KEY }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "KEYS_CERT_OTA_BASE64<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.CERT_OTA }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "KEYS_OTA_BASE64<<EOF" >> $GITHUB_ENV
+          echo "${{ secrets.OTA_KEY }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Patch OTA
         id: patch_ota
