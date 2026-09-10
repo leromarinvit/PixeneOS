@@ -76,12 +76,25 @@ jobs:
 
       - name: Read from `env.toml` if exist
         if: ${{ github.event_name == 'schedule' }}
+        env:
+          DEVICE_ID_INPUT: ${{ inputs.device-id }}
+          ROOT_INPUT: ${{ inputs.root }}
+          PREINIT_INPUT: ${{ inputs.magisk-preinit-device }}
+          CHANNEL_INPUT: ${{ inputs.update-channel }}
         run: |
           # Check if the file exists
           source src/util_functions.sh && check_toml_env
 
+          # A caller that names a device owns that device's configuration, so the
+          # env.toml device settings are not inherited by it. See multi-release.yml
+          if [[ -n "${DEVICE_ID_INPUT}" ]]; then
+            DEVICE_NAME="${DEVICE_ID_INPUT}"
+            ADDITIONALS[ROOT]="${ROOT_INPUT:-false}"
+            MAGISK[PREINIT]="${PREINIT_INPUT:-}"
+          fi
+
           echo "DEVICE_NAME=${DEVICE_NAME}" >> $GITHUB_ENV
-          echo "GRAPHENEOS_UPDATE_CHANNEL=${GRAPHENEOS[UPDATE_CHANNEL]}" >> $GITHUB_ENV
+          echo "GRAPHENEOS_UPDATE_CHANNEL=${CHANNEL_INPUT:-${GRAPHENEOS[UPDATE_CHANNEL]}}" >> $GITHUB_ENV
           echo "FORCE_UPDATE=${FORCE_UPDATE:-false}" >> $GITHUB_ENV
           # Let scheduled runs build rooted OTAs when env.toml enables it
           echo "ROOT=${ADDITIONALS[ROOT]}" >> $GITHUB_ENV
