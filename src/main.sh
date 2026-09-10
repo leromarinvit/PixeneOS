@@ -21,6 +21,10 @@ function main() {
   check_and_download_dependencies
   # Patch the OTA, sign it
   create_and_make_release
+
+  # Called rather than trapped: this script is sourced, so an EXIT trap would
+  # belong to the caller's shell and replace whatever trap it had installed
+  cleanup
 }
 
 main "$@"

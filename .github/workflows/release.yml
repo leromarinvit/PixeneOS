@@ -171,7 +171,6 @@ jobs:
           # Export the variables for the next steps
           echo "GRAPHENEOS_OTA_TARGET=${GRAPHENEOS[OTA_TARGET]}" >> $GITHUB_ENV
           echo "OUTPUTS_PATCHED_OTA=${OUTPUTS[PATCHED_OTA]}" >> $GITHUB_ENV
-          echo "WORKDIR=${WORKDIR}" >> $GITHUB_ENV
 
       - name: Generate Changelog
         run: |
