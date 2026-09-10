@@ -167,8 +167,11 @@ function patch_ota() {
 
   # Set the paths
   local ota_zip="${WORKDIR}/${GRAPHENEOS[OTA_TARGET]}"
-  local grapheneos_pkmd="${WORKDIR}/extracted/avb_pkmd.bin"
-  local grapheneos_otacert="${WORKDIR}/extracted/ota/META-INF/com/android/otacert"
+  # Extracted per device: the official keys differ between them, and a shared
+  # path would leave one device verified against another's
+  local extracted="${WORKDIR}/extracted/${DEVICE_NAME}"
+  local grapheneos_pkmd="${extracted}/avb_pkmd.bin"
+  local grapheneos_otacert="${extracted}/otacert"
   local magisk_path="${WORKDIR}/modules/magisk.apk"
   local my_avbroot_setup="${WORKDIR}/tools/my-avbroot-setup"
 
@@ -177,10 +180,11 @@ function patch_ota() {
     enable_venv
   fi
 
-  # Extract the official public keys and certificates if not found
-  if [[ ! -e "${grapheneos_pkmd}" || ! -e "${grapheneos_otacert}" ]]; then
+  # Size, not existence: an empty key would otherwise be reused for every
+  # later build of this device
+  if [[ ! -s "${grapheneos_pkmd}" || ! -s "${grapheneos_otacert}" ]]; then
     log "Extracting official keys..."
-    extract_official_keys
+    extract_official_keys "${extracted}"
   fi
 
   if [[ -f "${OUTPUTS[PATCHED_OTA]}" ]]; then
@@ -227,9 +231,6 @@ function patch_ota() {
       log "Magisk is not enabled. Skipping...\n"
     fi
 
-    # Have to clear storage space because, `csig` results in storage runout
-    rm -rf ${WORKDIR}/extracted/extracts/
-
     # Python command to run the patch script
     python ${my_avbroot_setup}/patch.py "${args[@]}"
   fi
@@ -249,7 +250,9 @@ function my_avbroot_setup() {
   log "Running script modifications..."
 
   # Update location path to use GitHub releases
-  sed -i -e "s|generate_update_info(update_info, args.output.name)|generate_update_info(update_info, '${location_path}')|" "${setup_script}"
+  # Matches an already injected URL too, so a second device does not keep the
+  # first one's
+  sed -i -e "s|generate_update_info(update_info, [^)]*)|generate_update_info(update_info, '${location_path}')|" "${setup_script}"
 }
 
 # Function to setup the environment variables and paths for patching the OTA
@@ -417,25 +420,32 @@ function extract_official_keys() {
   #   Verify that the key is official by comparing its sha256 checksum with grapheneos.org/articles/attestation-compatibility-guide.
   # OTA: Extract META-INF/com/android/otacert from the OTA.
   #   (Or from otacerts.zip inside system.img or vendor_boot.img. All 3 files are identical.)
+  local extracted="${1:?a per device extraction directory is required}"
   local ota_zip="${WORKDIR}/${GRAPHENEOS[OTA_TARGET]}.zip"
+
+  mkdir -p "${extracted}"
 
   # Extract OTA
   avbroot ota extract \
     --input "${ota_zip}" \
-    --directory "${WORKDIR}/extracted/extracts" \
+    --directory "${extracted}/extracts" \
     --all
 
   # Extract vbmeta.img
   # To verify, execute sha256sum avb_pkmd.bin in terminal
   # compare the output with base16-encoded verified boot key fingerprints
   # mentioned at https://grapheneos.org/articles/attestation-compatibility-guide for the respective device
-  avbroot avb info -i "${WORKDIR}/extracted/extracts/vbmeta.img" |
+  avbroot avb info -i "${extracted}/extracts/vbmeta.img" |
     grep 'public_key' |
     sed -n 's/.*public_key: "\(.*\)".*/\1/p' |
-    tr -d '[:space:]' | xxd -r -p >"${WORKDIR}/extracted/avb_pkmd.bin"
+    tr -d '[:space:]' | xxd -r -p >"${extracted}/avb_pkmd.bin"
 
-  # Extract META-INF/com/android/otacert from OTA or otacerts.zip from either vendor_boot.img or system.img
-  unzip "${ota_zip}" -d "${WORKDIR}/extracted/ota"
+  # The unpacked payload was only needed for the key above, and it is gigabytes
+  rm -rf "${extracted}/extracts"
+
+  # Only the certificate is wanted, and `-j` drops its archive path so it lands
+  # beside the key. Unpacking the whole OTA would leave gigabytes behind
+  unzip -q -o -j "${ota_zip}" 'META-INF/com/android/otacert' -d "${extracted}"
 }
 
 function dirty_suffix() {
@@ -451,8 +461,6 @@ function make_directories() {
   mkdir -p \
     "${WORKDIR}" \
     "${WORKDIR}/.keys" \
-    "${WORKDIR}/extracted/extracts" \
-    "${WORKDIR}/extracted/ota" \
     "${WORKDIR}/modules" \
     "${WORKDIR}/signatures" \
     "${WORKDIR}/tools"
