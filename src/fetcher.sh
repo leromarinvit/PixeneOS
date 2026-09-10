@@ -16,7 +16,34 @@ function get_latest_version() {
     return 1
   fi
 
-  latest_grapheneos_version=$(curl -sL "${GRAPHENEOS[OTA_BASE_URL]}/${DEVICE_NAME}-${GRAPHENEOS[UPDATE_CHANNEL]}" | sed 's/ .*//')
+  # Check the status code: `-f` fails the same way on every status over 400 and
+  # would call a 503 a device with no release. A transport failure is 000.
+  # Kept out of a pipeline too: a pipe reports sed's status, and whether curl's
+  # survives would depend on the caller having set pipefail
+  local raw http_status
+  raw=$(curl -sL --max-time 30 --retry 2 --write-out '\n%{http_code}' \
+    "${GRAPHENEOS[OTA_BASE_URL]}/${DEVICE_NAME}-${GRAPHENEOS[UPDATE_CHANNEL]}") || true
+  http_status="${raw##*$'\n'}"
+  latest_grapheneos_version=$(sed 's/ .*//' <<<"${raw%$'\n'*}")
+
+  case "${http_status}" in
+  200) ;;
+  404)
+    error "No GrapheneOS release for \`${DEVICE_NAME}\` on the \`${GRAPHENEOS[UPDATE_CHANNEL]}\` channel.\n"
+    return 1
+    ;;
+  *)
+    error "Could not read the release list for \`${DEVICE_NAME}\` (HTTP ${http_status}).\n"
+    return 1
+    ;;
+  esac
+
+  # A release is a ten digit date, and anything else would go on to name an
+  # asset and a tag
+  if [[ ! "${latest_grapheneos_version}" =~ ^[0-9]{10}$ ]]; then
+    error "Unexpected GrapheneOS version for \`${DEVICE_NAME}\`: \`${latest_grapheneos_version}\`.\n"
+    return 1
+  fi
   # Annotated tags produce an extra `<tag>^{}` entry that must not become the version
   latest_magisk_version=$(
     git ls-remote --tags "${DOMAIN}/${MAGISK[REPOSITORY]}.git" |
@@ -40,11 +67,6 @@ function get_latest_version() {
 
   # e.g.  bluejay-ota_update-2024080200
   log "GrapheneOS OTA target: \`${GRAPHENEOS[OTA_TARGET]}\`\nGrapheneOS OTA URL: ${GRAPHENEOS[OTA_URL]}\n"
-
-  if [[ -z "${latest_grapheneos_version}" ]]; then
-    error "Failed to get the latest version."
-    exit 1
-  fi
 
   if [[ -z "${VERSION[GRAPHENEOS]}" ]]; then
     VERSION[GRAPHENEOS]="${GRAPHENEOS_VERSION:-${latest_grapheneos_version}}"
