@@ -99,6 +99,11 @@ jobs:
           # Let scheduled runs build rooted OTAs when env.toml enables it
           echo "ROOT=${ADDITIONALS[ROOT]}" >> $GITHUB_ENV
           echo "MAGISK_PREINIT=${MAGISK[PREINIT]}" >> $GITHUB_ENV
+          # These name the repository the update info points at, not where the
+          # release is made, which is always the one running the build. Like the
+          # rest of this step they apply to scheduled runs only
+          echo "GITHUB_USER=${GITHUB_USER}" >> $GITHUB_ENV
+          echo "GITHUB_REPO=${GITHUB_REPO}" >> $GITHUB_ENV
 
       - name: Check if `magisk-preinit-device` is set when `root` is true
         run: |
