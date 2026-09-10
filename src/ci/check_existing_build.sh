@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # Decide whether the release workflow needs to build.
-# Exits with 0 to build and 1 to skip.
 #
 # Reads from the environment:
 #   DEVICE_NAME         Device code name
@@ -10,16 +9,23 @@
 #   ROOT                "true" builds the magisk flavor, anything else rootless
 #   FORCE_UPDATE        "true" rebuilds the current version on module updates
 #
+# Writes build_needed to GITHUB_OUTPUT; the workflow skips the build steps when it
+# is false, so an already released version is a no-op rather than a failed run.
 # Writes FORCE_REBUILD=true to GITHUB_ENV when an existing asset gets replaced.
 
 set -o nounset -o pipefail -o errexit
+
+function decide() {
+  echo "build_needed=${1}" >>"${GITHUB_OUTPUT:-/dev/null}"
+  exit 0
+}
 
 build_flavor=$([[ "${ROOT:-false}" == "true" ]] && echo 'magisk' || echo 'rootless')
 
 # Check if the tag exists
 if ! git show-ref --tags "${GRAPHENEOS_VERSION}" --quiet; then
   echo -e "Tag with GrapheneOS version ${GRAPHENEOS_VERSION} does not exist. Creating one..."
-  exit 0
+  decide true
 fi
 
 echo -e "Tag with GrapheneOS version ${GRAPHENEOS_VERSION} already exists. Looking for assets..."
@@ -35,12 +41,12 @@ existing_csig=$(grep -E "${zip_regex%$}\.csig$" <<<"${existing_assets}" | head -
 
 if [[ -z "${existing_zip}" || -z "${existing_csig}" ]]; then
   echo -e "Assets with \`${build_flavor}\` flavor are missing. Proceeding with build..."
-  exit 0
+  decide true
 fi
 
 if [[ "${FORCE_UPDATE:-false}" != "true" ]]; then
-  echo -e "::error::Asset with \`${build_flavor}\` flavor already exists!"
-  exit 1
+  echo -e "::notice::Asset with \`${build_flavor}\` flavor already exists. Nothing to do."
+  decide false
 fi
 
 # FORCE_UPDATE is enabled: rebuild the current GrapheneOS version only if a
@@ -51,14 +57,15 @@ last_commit=$(sed -E 's/^.*-([0-9a-f]{7,40})(-dirty)?\.zip$/\1/' <<<"${existing_
 if ! git cat-file -e "${last_commit}^{commit}" 2>/dev/null; then
   echo -e "Commit \`${last_commit}\` from asset \`${existing_zip}\` is unknown. Proceeding with rebuild..."
   echo "FORCE_REBUILD=true" >>"${GITHUB_ENV:-/dev/null}"
-  exit 0
+  decide true
 fi
 
 module_changes=$(git diff "${last_commit}" HEAD -- src/declarations.sh | grep -E '^[+-]VERSION\[' || true)
 if [[ -z "${module_changes}" ]]; then
   echo -e "No module updates since \`${last_commit}\`. Skipping rebuild..."
-  exit 1
+  decide false
 fi
 
 echo -e "Module updates since \`${last_commit}\`:\n${module_changes}\nProceeding with rebuild..."
 echo "FORCE_REBUILD=true" >>"${GITHUB_ENV:-/dev/null}"
+decide true
