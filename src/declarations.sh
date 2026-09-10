@@ -22,10 +22,14 @@ FORCE_UPDATE="${FORCE_UPDATE:-false}"        # Rebuild the current release when 
 INTERACTIVE_MODE="${INTERACTIVE_MODE:-true}" # Enable interactive mode
 WORKDIR=".tmp"
 
-# GitHub variables. Override GITHUB_USER and GITHUB_REPO in env.toml for forks.
+# GitHub variables. In CI the build runs in the repository that holds its
+# releases, so default to it; env.toml overrides both, and supplies them for a
+# local run where neither variable is set.
 DOMAIN="https://github.com"
-GITHUB_REPO="${GITHUB_REPO:-PixeneOS}"    # GitHub repository name
-GITHUB_USER="${GITHUB_USER:-pixincreate}" # GitHub username
+GITHUB_USER="${GITHUB_USER:-${GITHUB_REPOSITORY_OWNER:-pixincreate}}" # GitHub username
+GITHUB_REPO="${GITHUB_REPO:-${GITHUB_REPOSITORY:-}}"
+GITHUB_REPO="${GITHUB_REPO#*/}"        # GITHUB_REPOSITORY is `owner/name`
+GITHUB_REPO="${GITHUB_REPO:-PixeneOS}" # GitHub repository name
 
 # Application version variables
 VERSION[AFSR]="${VERSION[AFSR]:-2.0.0}"
