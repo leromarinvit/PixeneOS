@@ -9,6 +9,16 @@
 
 # Keys and secrets
 .keys
+# generate_keys writes these into the working directory. avb_pkmd.bin is left
+# out on purpose: it is the public half and a fork may want to commit it
+avb.key
+ota.crt
+ota.key
+
+# A local build leaves the signature and the update info beside the sources
+*.csig
+/*.json
+!/.prettierrc.json
 
 # Python virtual environment
 venv
