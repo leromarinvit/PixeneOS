@@ -1,10 +1,14 @@
 name: Patch and Release OTA for Multiple Devices
 
-# Fans out one `release.yml` run per device and flavor.
+# Fans out one `release.yml` run per device and flavor, and is the scheduled
+# entry point for releases.
 # A single device fork sets no `DEVICES` and gets one run built from
 # `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT` in env.toml.
 
 on:
+  schedule:
+    - cron: "0 */6 * * *" # Check for update every 6 hours (UTC). GrapheneOS checks every 6 hours.
+
   workflow_dispatch:
     inputs:
       devices:

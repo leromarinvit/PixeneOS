@@ -305,8 +305,8 @@ To force a build manually, run [release.yml](.github/workflows/release.yml) from
 
 ### Multiple Devices and Flavors
 
-Use [multi-release.yml](.github/workflows/multi-release.yml) to build for more than one device, or for more than one flavor of the same device.
-It starts one [release.yml](.github/workflows/release.yml) run per entry in a comma-separated list.
+[multi-release.yml](.github/workflows/multi-release.yml) is the scheduled entry point for releases.
+It starts one [release.yml](.github/workflows/release.yml) run per entry in a comma-separated list, so a single run can cover several devices, both flavors of one device, or a mix of the two.
 
 Each entry is `device:preinit:root`, and the last two fields are optional:
 
@@ -318,12 +318,11 @@ Each entry is `device:preinit:root`, and the last two fields are optional:
 | `bluejay:sda8:true, panther::false` | One rooted device and one rootless device |
 | `bluejay:sda8:true, bluejay::false` | Both flavors of one device |
 
-When an entry omits root, the `root` input decides, or `ROOT` from `env.toml` when there is no input to follow.
+When an entry omits root, the `root` input decides, or `ROOT` from `env.toml` when there is no input to follow, as on a scheduled run.
 A preinit is a fact about one device and is never defaulted across them, so give every rooted entry its own.
 
 Leave the `devices` input empty to use `DEVICES` from `env.toml`.
-Leave `DEVICES` unset as well and a single entry is built from `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT`.
-This workflow runs only manually and does not affect single device setups.
+Leave `DEVICES` unset as well and a single entry is built from `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT`, so a single device setup needs no extra configuration and behaves as it always has.
 
 ### Hop Between Root and Rootless
 
