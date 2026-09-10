@@ -266,8 +266,16 @@ PixeneOS can be run on your local machine. A Linux based machine is preferred.
 > [!NOTE]
 > Running the program end-to-end will only generate the patched OTA package locally and will not push it to the server (server branch that contains the json file which is read by the Custota).
 
-The work directory `.tmp` keeps the downloaded OTA and the unpacked tools, so a later build of the same version reuses them instead of downloading again.
-Set `CLEANUP = "true"` in `env.toml` to remove it once the build finishes; the patched OTA and its update info are written beside the sources and are never removed.
+A local run builds every entry of the device list, through the same expansion
+the CI fan-out uses, so it produces what the fork releases.
+See [Multiple Devices and Flavors](#multiple-devices-and-flavors). With more
+than one entry the update info file is named `<device>-<flavor>.json`, since
+one `<device>.json` cannot describe both flavors.
+
+The work directory `.tmp` keeps the downloaded OTA and the unpacked tools, so
+a later build of the same version reuses them instead of downloading again.
+Set `CLEANUP = "true"` in `env.toml` to remove it once the build finishes; the
+patched OTA and its update info are written beside the sources and stay.
 
 `INTERACTIVE_MODE`, by default is set to `true` that calls `check_toml_env` function to check the existence of `env.toml`. If the file exist, it will read the `env.toml` file and set the environment variables accordingly. If the `env.toml` is non-existent, ignored. If it exist, and the format is wrong, the script exits with an error.
 

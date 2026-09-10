@@ -30,5 +30,8 @@ jobs:
         run: |
           source src/util_functions.sh && check_toml_env
 
+      - name: Check the release script exports its outputs
+        run: src/ci/check_source_contract.sh
+
       - name: Check download URLs
         run: src/ci/smoke_test.sh
