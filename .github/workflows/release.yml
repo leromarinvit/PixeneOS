@@ -52,11 +52,15 @@ on:
         type: string
         default: default
 
+# The inputs seed the configuration for every trigger; on a scheduled run the
+# env.toml step overrides these for the steps that follow it
 env:
   CARGO_INCREMENTAL: 1
   DEVICE_NAME: ${{ inputs.device-id }}
   INTERACTIVE_MODE: false
   GRAPHENEOS_UPDATE_CHANNEL: ${{ inputs.update-channel }}
+  MAGISK_PREINIT: ${{ inputs.magisk-preinit-device }}
+  ROOT: ${{ inputs.root }}
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
 
@@ -107,12 +111,8 @@ jobs:
 
       - name: Check if `magisk-preinit-device` is set when `root` is true
         run: |
-          # Inputs win on manual runs, env.toml supplies the values on schedule
-          root="${{ inputs.root || env.ROOT }}"
-          magisk_preinit_device="${{ inputs.magisk-preinit-device || env.MAGISK_PREINIT }}"
-
           # Ensure that the boolean comparison is correctly handled
-          if [ "$root" == "true" ] && [ -z "$magisk_preinit_device" ]; then
+          if [ "${ROOT}" == "true" ] && [ -z "${MAGISK_PREINIT}" ]; then
             echo -e "::error:: magisk-preinit-device is required when root is true."
             exit 1
           fi
@@ -135,7 +135,6 @@ jobs:
         if: github.event_name == 'schedule' || inputs.release-type == 'default'
         env:
           REPOSITORY: ${{ github.repository }}
-          ROOT: ${{ inputs.root || env.ROOT }}
         run: src/ci/check_existing_build.sh
 
       - name: Setup Git
@@ -174,9 +173,8 @@ jobs:
       - name: Patch OTA
         shell: bash
         env:
-          ADDITIONALS_ROOT: ${{ inputs.root || env.ROOT }}
+          ADDITIONALS_ROOT: ${{ env.ROOT }}
           CLEANUP: true
-          MAGISK_PREINIT: ${{ inputs.magisk-preinit-device || env.MAGISK_PREINIT }}
           PASSPHRASE_AVB: ${{ secrets.PASSPHRASE_AVB }}
           PASSPHRASE_OTA: ${{ secrets.PASSPHRASE_OTA }}
         run: |
@@ -212,7 +210,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          ROOT: ${{ inputs.root || env.ROOT }}
         run: src/ci/remove_superseded_assets.sh
 
       - name: Publish OTA to server
@@ -220,5 +217,4 @@ jobs:
         if: inputs.release-type != 'build-only'
         env:
           RELEASE_TYPE: ${{ inputs.release-type }}
-          ROOT: ${{ inputs.root || env.ROOT }}
         run: src/ci/publish_ota.sh
