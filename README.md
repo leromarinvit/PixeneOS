@@ -281,7 +281,7 @@ patched OTA and its update info are written beside the sources and stay.
 
 Configuration is layered.
 `src/declarations.sh` sets the defaults, `env.toml` overrides them, and workflow inputs override both.
-In CI, `release.yml` reads `env.toml` only on scheduled runs, and takes everything from its inputs otherwise.
+In CI, `release.yml` reads `env.toml` only when the triggering event is a schedule, which means a run that `multi-release.yml` started; otherwise it takes everything from its inputs.
 `multi-release.yml` always reads it, and falls back to its `DEVICES` and `ROOT` for whichever of the two inputs is empty.
 A fork releases to the repository it builds in, and its update info points there, with nothing to configure.
 `GITHUB_USER` and `GITHUB_REPO` in `env.toml` change only the download URL written into the update info, for a fork that mirrors its assets elsewhere; the release itself is still made where the build runs.
@@ -312,8 +312,8 @@ To force a build manually, run [release.yml](.github/workflows/release.yml) from
 
 ### Multiple Devices and Flavors
 
-Use [multi-release.yml](.github/workflows/multi-release.yml) to build for more than one device, or for more than one flavor of the same device.
-It starts one [release.yml](.github/workflows/release.yml) run per entry in a comma-separated list.
+[multi-release.yml](.github/workflows/multi-release.yml) is the scheduled entry point for releases.
+It starts one [release.yml](.github/workflows/release.yml) run per entry in a comma-separated list, so a single run can cover several devices, both flavors of one device, or a mix of the two.
 
 Each entry is `device:preinit:root`, and the last two fields are optional:
 
@@ -325,14 +325,13 @@ Each entry is `device:preinit:root`, and the last two fields are optional:
 | `bluejay:sda8:true, panther::false` | One rooted device and one rootless device |
 | `bluejay:sda8:true, bluejay::false` | Both flavors of one device |
 
-When an entry omits root, the `root` input decides, or `ROOT` from `env.toml` when there is no input to follow.
+When an entry omits root, the `root` input decides, or `ROOT` from `env.toml` when there is no input to follow, as on a scheduled run.
 A preinit names a partition that can only be determined on a real device, so it is never defaulted across a list; give every rooted entry its own.
 A rooted entry without one is rejected rather than patched with an empty partition.
 A device may appear once per flavor but not twice with the same one, since both entries would build to the same file name.
 
 Leave the `devices` input empty to use `DEVICES` from `env.toml`.
-Leave `DEVICES` unset as well and a single entry is built from `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT`.
-This workflow runs only manually and does not affect single device setups.
+Leave `DEVICES` unset as well and a single entry is built from `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT`, so a single device setup needs no extra configuration and behaves as it always has.
 
 ### Hop Between Root and Rootless
 
