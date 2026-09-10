@@ -55,14 +55,11 @@ on:
 # The inputs seed the configuration for every trigger; on a scheduled run the
 # env.toml step overrides these for the steps that follow it
 env:
-  CARGO_INCREMENTAL: 1
   DEVICE_NAME: ${{ inputs.device-id }}
   INTERACTIVE_MODE: false
   GRAPHENEOS_UPDATE_CHANNEL: ${{ inputs.update-channel }}
   MAGISK_PREINIT: ${{ inputs.magisk-preinit-device }}
   ROOT: ${{ inputs.root }}
-  RUST_BACKTRACE: short
-  RUSTUP_MAX_RETRIES: 10
 
 jobs:
   build:
@@ -154,16 +151,6 @@ jobs:
 
           git config --global user.email "$USER_EMAIL"
           git config --global user.name "$USER_NAME"
-
-      - name: Install Rust stable
-        if: steps.check_build_exists.outputs.build_needed != 'false'
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable 2 weeks ago
-
-      - name: Build and Cache Rust Dependencies
-        if: steps.check_build_exists.outputs.build_needed != 'false'
-        uses: Swatinem/rust-cache@v2.9.2
 
       - name: Install Python
         if: steps.check_build_exists.outputs.build_needed != 'false'
