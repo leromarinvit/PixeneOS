@@ -281,10 +281,11 @@ patched OTA and its update info are written beside the sources and stay.
 
 Configuration is layered.
 `src/declarations.sh` sets the defaults, `env.toml` overrides them, and workflow inputs override both.
-In CI, `env.toml` is read only on scheduled runs.
-Manual runs take all values from the workflow inputs.
+In CI, `release.yml` reads `env.toml` only on scheduled runs, and takes everything from its inputs otherwise.
+`multi-release.yml` always reads it, and falls back to its `DEVICES` and `ROOT` for whichever of the two inputs is empty.
 Forks set `GITHUB_USER` and `GITHUB_REPO` in `env.toml` so `src/declarations.sh` stays untouched.
 Scheduled runs also read `ROOT` and `MAGISK_PREINIT` from `env.toml`, so a fork can build rooted OTAs on schedule.
+A run started per device by [multi-release.yml](.github/workflows/multi-release.yml) takes its device, root flag and preinit from its caller rather than from `env.toml`, so no run inherits the `env.toml` device's settings.
 
 To make the patched OTA available to the device, it needs to be hosted on the server. PixeneOS uses GitHub for pushing updates, handled by [release.yml](.github/workflows/release.yml).
 
