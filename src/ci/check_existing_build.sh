@@ -31,8 +31,42 @@ fi
 echo -e "Tag with GrapheneOS version ${GRAPHENEOS_VERSION} already exists. Looking for assets..."
 # Fetch the release information for the tag
 repo_url="https://api.github.com/repos/${REPOSITORY}/releases/tags/${GRAPHENEOS_VERSION}"
-# `.assets[]?` keeps the script alive when the tag has no release
-existing_assets=$(curl -sL "${repo_url}" | jq -r '.assets[]?.name')
+
+# Unauthenticated, this shares a 60 per hour limit with every other runner on
+# the same address. A throttled reply parses as a release with no assets, which
+# reads as "rebuild", so every scheduled run would rebuild and republish
+auth=()
+if [[ -n "${GH_TOKEN:-}" ]]; then
+  auth=(--header "Authorization: Bearer ${GH_TOKEN}")
+fi
+
+release_body=$(mktemp)
+trap 'rm -f "${release_body}"' EXIT
+http_status=$(curl -sL --max-time 30 --retry 2 "${auth[@]}" \
+  --output "${release_body}" --write-out '%{http_code}' "${repo_url}" || true)
+
+case "${http_status}" in
+404)
+  # The tag exists but carries no release yet
+  echo -e "No release for ${GRAPHENEOS_VERSION} yet. Proceeding with build..."
+  decide true
+  ;;
+200) ;;
+*)
+  echo "::error::Could not read the ${GRAPHENEOS_VERSION} release of ${REPOSITORY} (HTTP ${http_status:-000})."
+  exit 1
+  ;;
+esac
+
+# A proxy or captive portal can answer 200 with something that is not a release.
+# An empty body and an unrelated object both survive `jq` and read as a release
+# with no assets, which is the rebuild path again
+if [[ "$(jq 'type == "object" and has("assets")' <"${release_body}" 2>/dev/null)" != "true" ]]; then
+  echo "::error::The ${GRAPHENEOS_VERSION} release of ${REPOSITORY} did not parse as a release."
+  exit 1
+fi
+
+existing_assets=$(jq -r '.assets[]?.name' <"${release_body}")
 
 # Assets of the current flavor, e.g. bluejay-2026081300-rootless-abc1234.zip
 zip_regex="^${DEVICE_NAME}-${GRAPHENEOS_VERSION}-${build_flavor}-.*\.zip$"
