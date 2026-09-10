@@ -50,8 +50,11 @@ function base64_decode() {
     local base64_key="${KEYS[$key]}"
 
     if [[ -n "${base64_key}" ]]; then
-      # Generate output file name based on key name
-      local output_file="${WORKDIR}/.keys/${KEYS[$(echo ${key} | sed 's/_BASE64$//')]}"
+      # Generate output file name based on key name. `basename` so a second
+      # call does not prefix a path this function already prefixed
+      local key_name output_file
+      key_name="${key%_BASE64}"
+      output_file="${WORKDIR}/.keys/$(basename "${KEYS[${key_name}]}")"
 
       # Decode base64 and write to a file
       echo "${base64_key}" | base64 --decode >"${output_file}"
@@ -61,7 +64,7 @@ function base64_decode() {
         success_status=false
       else
         # Decodes ${key} to ${output_file}"
-        KEYS[$(echo ${key} | sed 's/_BASE64$//')]="${output_file}"
+        KEYS[${key_name}]="${output_file}"
         success_status=true
       fi
     else
