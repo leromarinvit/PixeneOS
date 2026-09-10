@@ -304,7 +304,7 @@ To set up automated release, add the following variables in GitHub secrets:
 
 ### Force Update
 
-By default, scheduled runs skip the build when a release for the current GrapheneOS version and flavor already exists.
+By default, scheduled runs skip the build when a release for the current GrapheneOS version and flavor already exists; the run finishes green with those steps skipped.
 Set `FORCE_UPDATE = "true"` in `env.toml` to let scheduled runs rebuild the current version when a module gets an update.
 The check compares the module versions in `src/declarations.sh` against the commit that built the existing release asset.
 A rebuild replaces the previous asset of the same device and flavor on the release.
