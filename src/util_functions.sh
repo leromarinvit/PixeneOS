@@ -369,7 +369,7 @@ function construct_url() {
 # This function is called by download_dependencies function when running in non-interactive mode
 function url_constructor() {
   local repository="${1}"
-  INTERACTIVE_MODE="${2:-true}"
+  local INTERACTIVE_MODE="${2:-true}"
 
   log "Constructing URL for \`${repository}\` as \`${repository}\` is non-existent at \`${WORKDIR}\`..."
   construct_url "${repository}"
@@ -399,7 +399,9 @@ function url_constructor() {
 # This calls the constructor that constructs the URL for the tools and modules
 function download_dependencies() {
   local tool="${1}"
-  INTERACTIVE_MODE='false'
+  # Local: downloading is non-interactive, but the caller's mode decides how the
+  # keys are read later
+  local INTERACTIVE_MODE='false'
 
   if type url_constructor &>/dev/null; then
     url_constructor "${tool}" "${INTERACTIVE_MODE}"
