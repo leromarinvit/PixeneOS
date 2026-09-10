@@ -296,12 +296,26 @@ The check compares the module versions in `src/declarations.sh` against the comm
 A rebuild replaces the previous asset of the same device and flavor on the release.
 To force a build manually, run [release.yml](.github/workflows/release.yml) from the Actions tab and set `release-type` to `force-publish`.
 
-### Multiple Devices
+### Multiple Devices and Flavors
 
-Use [multi-release.yml](.github/workflows/multi-release.yml) to build for more than one device.
-It starts one release run per device from a comma-separated list, for example `bluejay, panther`.
-With root enabled, append the Magisk preinit device to each entry, for example `bluejay:sda8, panther:sda15`.
-Leave the `devices` input empty to use the `DEVICES` value from `env.toml`, so you do not have to type the list on every run.
+Use [multi-release.yml](.github/workflows/multi-release.yml) to build for more than one device, or for more than one flavor of the same device.
+It starts one [release.yml](.github/workflows/release.yml) run per entry in a comma-separated list.
+
+Each entry is `device:preinit:root`, and the last two fields are optional:
+
+| Entry | Result |
+| --- | --- |
+| `panther` | Follows the `root` input, no preinit |
+| `bluejay:sda8` | Follows the `root` input, preinit `sda8` |
+| `bluejay:sda8:true` | Rooted, preinit `sda8` |
+| `bluejay:sda8:true, panther::false` | One rooted device and one rootless device |
+| `bluejay:sda8:true, bluejay::false` | Both flavors of one device |
+
+When an entry omits root, the `root` input decides, or `ROOT` from `env.toml` when there is no input to follow.
+A preinit is a fact about one device and is never defaulted across them, so give every rooted entry its own.
+
+Leave the `devices` input empty to use `DEVICES` from `env.toml`.
+Leave `DEVICES` unset as well and a single entry is built from `DEVICE_NAME`, `ROOT` and `MAGISK_PREINIT`.
 This workflow runs only manually and does not affect single device setups.
 
 ### Hop Between Root and Rootless
