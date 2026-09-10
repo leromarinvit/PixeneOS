@@ -46,9 +46,28 @@ fi
 # Commit and push the changes if there is something to publish
 if ! git diff-index --quiet HEAD; then
   git commit -m "release(${CURRENT_COMMIT}): bump GrapheneOS version to ${GRAPHENEOS_VERSION}"
-  # Rebase to survive concurrent pushes from parallel device builds, see multi-release.yml
-  git pull --rebase origin gh-pages
-  git push origin gh-pages
+
+  # Parallel device builds publish to the same branch, see multi-release.yml. A
+  # rebase alone still loses to whoever pushes between the pull and the push,
+  # and a rejected push would drop this device's update info entirely
+  attempts=5
+  for attempt in $(seq 1 "${attempts}"); do
+    # The pull is retried too: a fetch can fail on its own, and a rebase left
+    # half applied would strand the checkout on gh-pages
+    if git pull --rebase origin gh-pages && git push origin gh-pages; then
+      break
+    fi
+    git rebase --abort 2>/dev/null || true
+
+    if [[ "${attempt}" -eq "${attempts}" ]]; then
+      echo "::error::Could not publish to gh-pages after ${attempts} attempts."
+      # Leaving the checkout on gh-pages would surprise anything added after
+      git checkout main
+      exit 1
+    fi
+
+    sleep $((attempt * 3))
+  done
 fi
 
 # Switch back to main branch
