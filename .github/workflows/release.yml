@@ -145,6 +145,13 @@ jobs:
           USER_EMAIL: ${{ secrets.EMAIL }}
           USER_NAME: ${{ github.repository_owner }}
         run: |
+          # An unset secret is an empty string that `git config` accepts, and
+          # the publisher would commit with no address rather than stop here
+          if [[ -z "$USER_EMAIL" ]]; then
+            echo "::error::The \`EMAIL\` secret is not set."
+            exit 1
+          fi
+
           git config --global user.email "$USER_EMAIL"
           git config --global user.name "$USER_NAME"
 
