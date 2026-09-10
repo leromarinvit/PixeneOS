@@ -9,6 +9,13 @@ function get_latest_version() {
   local latest_grapheneos_version
   local latest_magisk_version
 
+  # Without a device the release URL resolves to a 404 page that then becomes
+  # the version string, so fail here rather than build a nonsense OTA URL
+  if [[ -z "${DEVICE_NAME}" ]]; then
+    error "Missing required param \`DEVICE_NAME\`.\n"
+    return 1
+  fi
+
   latest_grapheneos_version=$(curl -sL "${GRAPHENEOS[OTA_BASE_URL]}/${DEVICE_NAME}-${GRAPHENEOS[UPDATE_CHANNEL]}" | sed 's/ .*//')
   # Annotated tags produce an extra `<tag>^{}` entry that must not become the version
   latest_magisk_version=$(
