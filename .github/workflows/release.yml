@@ -216,8 +216,11 @@ jobs:
 
       - name: Remove superseded release assets
         shell: bash
+        # A force-publish skips the step that writes FORCE_REBUILD, so it has to
+        # name itself here: it exists to rebuild a version that already has a release
         if: steps.check_build_exists.outputs.build_needed != 'false' &&
-          env.FORCE_REBUILD == 'true' && inputs.release-type != 'build-only'
+          inputs.release-type != 'build-only' &&
+          (env.FORCE_REBUILD == 'true' || inputs.release-type == 'force-publish')
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
