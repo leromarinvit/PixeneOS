@@ -135,6 +135,7 @@ jobs:
         shell: bash
         if: github.event_name == 'schedule' || inputs.release-type == 'default'
         env:
+          GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: src/ci/check_existing_build.sh
 
