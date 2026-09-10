@@ -114,8 +114,6 @@ function create_and_make_release() {
 }
 
 function create_ota() {
-  [[ "${CLEANUP}" != 'true' ]] && trap cleanup EXIT ERR
-
   # Generate output file names
   generate_ota_info
   # Setup environment variables and paths
@@ -124,16 +122,17 @@ function create_ota() {
   patch_ota
 }
 
-# Function to cleanup the temporary files and unset the keys when not in interactive mode
+# Remove the work directory and drop the decoded keys, when CLEANUP is true
 function cleanup() {
-  if [[ "${CLEANUP}" != 'true' ]]; then
+  if [[ "${CLEANUP:-false}" != 'true' ]]; then
     log "Cleanup is disabled. Exiting...\n"
     return
   fi
 
   log "Cleaning up..."
   rm -rf "${WORKDIR}"
-  unset "${KEYS[@]}"
+  # Emptied rather than unset, which would drop the associative attribute
+  KEYS=()
   log "Cleanup complete."
 }
 
