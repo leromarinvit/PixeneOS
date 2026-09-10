@@ -126,6 +126,7 @@ jobs:
           echo "GRAPHENEOS_VERSION=${VERSION[GRAPHENEOS]}" >> $GITHUB_ENV
 
       - name: Check if a build exists already and verify assets
+        id: check_build_exists
         shell: bash
         if: github.event_name == 'schedule' || inputs.release-type == 'default'
         env:
@@ -133,24 +134,29 @@ jobs:
         run: src/ci/check_existing_build.sh
 
       - name: Setup Git
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         run: |
           # Configure git for pushing changes
           git config --global user.email ${{ secrets.EMAIL }} && git config --global user.name PiX
 
       - name: Install Rust stable
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable 2 weeks ago
 
       - name: Build and Cache Rust Dependencies
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         uses: Swatinem/rust-cache@v2.9.2
 
       - name: Install Python
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         uses: actions/setup-python@v7
         with:
           python-version: "3.12-dev"
 
       - name: Setup Environment variables
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         run: |
           echo "KEYS_AVB_BASE64<<EOF" >> $GITHUB_ENV
           echo "${{ secrets.AVB_KEY }}" >> $GITHUB_ENV
@@ -163,6 +169,7 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Patch OTA
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         shell: bash
         env:
           ADDITIONALS_ROOT: ${{ env.ROOT }}
@@ -182,13 +189,15 @@ jobs:
           echo "WORKDIR=${WORKDIR}" >> $GITHUB_ENV
 
       - name: Generate Changelog
+        if: steps.check_build_exists.outputs.build_needed != 'false'
         run: |
           # Generate a changelog for the release taking the latest GrapheneOS release
           echo -e "See [Changelog](https://grapheneos.org/releases#${{ env.GRAPHENEOS_VERSION }})." > ${{ github.workspace }}-CHANGELOG.txt
 
       - name: Make Release
         uses: softprops/action-gh-release@v3
-        if: inputs.release-type != 'build-only'
+        if: steps.check_build_exists.outputs.build_needed != 'false' &&
+          inputs.release-type != 'build-only'
         with:
           body_path: ${{ github.workspace }}-CHANGELOG.txt
           files: |
@@ -199,7 +208,8 @@ jobs:
 
       - name: Remove superseded release assets
         shell: bash
-        if: env.FORCE_REBUILD == 'true' && inputs.release-type != 'build-only'
+        if: steps.check_build_exists.outputs.build_needed != 'false' &&
+          env.FORCE_REBUILD == 'true' && inputs.release-type != 'build-only'
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
@@ -207,7 +217,8 @@ jobs:
 
       - name: Publish OTA to server
         shell: bash
-        if: inputs.release-type != 'build-only'
+        if: steps.check_build_exists.outputs.build_needed != 'false' &&
+          inputs.release-type != 'build-only'
         env:
           RELEASE_TYPE: ${{ inputs.release-type }}
         run: src/ci/publish_ota.sh
