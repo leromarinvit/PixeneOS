@@ -20,12 +20,16 @@ CLEANUP="${CLEANUP:-false}"                  # Clean up after the script finishe
 DEVICE_NAME="${DEVICE_NAME:-}"               # Device name, passed from the CI environment
 FORCE_UPDATE="${FORCE_UPDATE:-false}"        # Rebuild the current release when a module gets an update
 INTERACTIVE_MODE="${INTERACTIVE_MODE:-true}" # Enable interactive mode
+# shellcheck disable=SC2034 # consumed by the files that source this one
 WORKDIR=".tmp"
 
-# GitHub variables. In CI the build runs in the repository that holds its
-# releases, so default to it; env.toml overrides both, and supplies them for a
-# local run where neither variable is set.
+# GitHub variables
+# shellcheck disable=SC2034 # consumed by the files that source this one
 DOMAIN="https://github.com"
+
+# In CI the build runs in the repository that holds its releases, so default to
+# it; env.toml overrides both, and supplies them for a local run where neither
+# variable is set
 GITHUB_USER="${GITHUB_USER:-${GITHUB_REPOSITORY_OWNER:-pixincreate}}" # GitHub username
 GITHUB_REPO="${GITHUB_REPO:-${GITHUB_REPOSITORY:-}}"
 GITHUB_REPO="${GITHUB_REPO#*/}"        # GITHUB_REPOSITORY is `owner/name`
