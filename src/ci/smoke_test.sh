@@ -24,9 +24,20 @@ function check_url() {
   fi
 }
 
-# Read the device configuration and resolve the latest versions
+# Read the device configuration
 check_toml_env
-get_latest_version
+
+# Every configured device, so a fork that sets only `DEVICES` is covered too
+device_list=$(parse_devices)
+mapfile -t devices < <(cut -d: -f1 <<<"${device_list}" | sort -u)
+
+# The GrapheneOS version is per device; the tool and Magisk versions are not, so
+# one pass resolves everything the checks below need
+declare -a ota_urls=()
+for DEVICE_NAME in "${devices[@]}"; do
+  get_latest_version
+  ota_urls+=("${GRAPHENEOS[OTA_URL]}")
+done
 
 # Tools and modules from declarations
 tool_list=$(supported_tools "cdd")
@@ -46,7 +57,9 @@ done
 # Magisk APK from the latest tag of the configured repository
 check_url "magisk" "${DOMAIN}/${MAGISK[REPOSITORY]}/releases/download/${VERSION[MAGISK]}/Magisk-${VERSION[MAGISK]}.apk"
 
-# GrapheneOS OTA for the configured device
-check_url "grapheneos-ota" "${GRAPHENEOS[OTA_URL]}"
+# The GrapheneOS OTA is per device
+for index in "${!devices[@]}"; do
+  check_url "grapheneos-ota (${devices[index]})" "${ota_urls[index]}"
+done
 
 exit "${FAILED}"

@@ -467,6 +467,117 @@ function generate_ota_info() {
   OUTPUTS[PATCHED_OTA]="${DEVICE_NAME}-${VERSION[GRAPHENEOS]}-${flavor}-$(git rev-parse --short HEAD)$(dirty_suffix).zip"
 }
 
+# Strip leading and trailing whitespace. `xargs` would do it but also applies
+# shell quoting, so a value with a quote in it fails or comes back changed
+function trim() {
+  local value="${1}"
+  value="${value#"${value%%[![:space:]]*}"}"
+  printf '%s' "${value%"${value##*[![:space:]]}"}"
+}
+
+# Expand the configured device list into one normalised `device:preinit:root`
+# entry per line, so a CI matrix and a local build agree on what a list means.
+# Input entries are `device:preinit:root` with the last two optional; an entry
+# that omits root takes ${1}, or `ROOT` from env.toml when that is empty. An
+# empty list falls back to the single device DEVICE_NAME describes.
+# The output always carries all three fields, so a colon separated read keeps
+# them aligned; a tab would not, since bash collapses runs of whitespace
+# delimiters.
+# Returns 1 on a malformed entry rather than guessing what it meant.
+# Usage: parse_devices [root_override] [device_list]
+function parse_devices() {
+  local default_root="${1:-${ADDITIONALS[ROOT]}}"
+  local list="${2:-${DEVICES:-}}"
+  local entry device preinit root
+  local -a entries=() fields=() parsed=() seen=()
+
+  # A single device setup configures DEVICE_NAME rather than DEVICES
+  if [[ -z "${list}" && -n "${DEVICE_NAME}" ]]; then
+    list="${DEVICE_NAME}:${MAGISK[PREINIT]}:${default_root}"
+  fi
+
+  if [[ -z "${list}" ]]; then
+    error "No devices configured. Set \`DEVICES\` or \`DEVICE_NAME\` in \`env.toml\`."
+    return 1
+  fi
+
+  # `read` stops at the first newline, so a list wrapped across lines would be
+  # silently cut short rather than rejected
+  list="${list//$'\n'/,}"
+
+  IFS=',' read -ra entries <<<"${list}"
+  for entry in "${entries[@]}"; do
+    entry=$(trim "${entry}")
+    if [[ -z "${entry}" ]]; then
+      continue
+    fi
+
+    # Fields are trimmed too, so `bluejay:sda8: true` is not silently rootless
+    IFS=':' read -ra fields <<<"${entry}"
+    if [[ "${#fields[@]}" -gt 3 ]]; then
+      error "Entry \`${entry}\` has more than the three \`device:preinit:root\` fields."
+      return 1
+    fi
+
+    device=$(trim "${fields[0]}")
+    preinit=$(trim "${fields[1]:-}")
+    root=$(trim "${fields[2]:-}")
+    root="${root:-${default_root}}"
+
+    if [[ -z "${device}" ]]; then
+      error "Entry without a device name in \`${list}\`."
+      return 1
+    fi
+
+    # A device name reaches a URL and a path on disk, so keep it to characters
+    # that mean nothing to either
+    if [[ ! "${device}" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+      error "Invalid device name \`${device}\` in \`${list}\`, expected letters, digits, \`_\` or \`-\`."
+      return 1
+    fi
+
+    # Anything but true or false would quietly pick a flavor for the user
+    case "${root}" in
+      true | false) ;;
+      *)
+        error "Invalid root \`${root}\` for \`${device}\`, expected \`true\` or \`false\`."
+        return 1
+        ;;
+    esac
+
+    # Rooted without a preinit patches with an empty `--magisk-preinit-device`.
+    # release.yml catches it for its own leg; catching it here covers a local
+    # build too
+    if [[ "${root}" == 'true' && -z "${preinit}" ]]; then
+      error "\`${device}\` is rooted but has no preinit, see the Magisk Preinit section of the README."
+      return 1
+    fi
+
+    # The output file name is device, version and flavor, so a repeat of the
+    # same pair would build once and publish the first entry's preinit twice
+    if [[ " ${seen[*]:-} " == *" ${device}:${root} "* ]]; then
+      error "\`${device}\` appears twice with root \`${root}\` in \`${list}\`."
+      return 1
+    fi
+    seen+=("${device}:${root}")
+
+    parsed+=("$(printf '%s:%s:%s' "${device}" "${preinit}" "${root}")")
+  done
+
+  if [[ ${#parsed[@]} -eq 0 ]]; then
+    error "No devices found in \`${list}\`."
+    return 1
+  fi
+
+  # The preinit partition can only be determined on a real device
+  if [[ -n "${MAGISK[PREINIT]}" ]] &&
+    [[ $(printf '%s\n' "${parsed[@]}" | cut -d: -f1 | sort -u | wc -l) -gt 1 ]]; then
+    warn "\`MAGISK_PREINIT\` is not applied to a multi device list. Give each rooted entry its own preinit, for example \`bluejay:sda8\`."
+  fi
+
+  printf '%s\n' "${parsed[@]}"
+}
+
 function check_toml_env() {
   declare -A config_vars
   toml_file="env.toml"
