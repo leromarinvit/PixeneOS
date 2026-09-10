@@ -134,7 +134,15 @@ function download_ota() {
   # Download if not downloaded already
   if [ ! -f "${ota}" ]; then
     log "Downloading OTA from: ${GRAPHENEOS[OTA_URL]}...\nPlease be patient while the download happens."
-    curl -sL "${GRAPHENEOS[OTA_URL]}" --output "${ota}"
+    # Downloaded beside the target and moved into place only once it is whole:
+    # without `-f` an error page becomes the zip, and a run killed part way
+    # through leaves a partial one that the check above then treats as downloaded
+    if ! curl -sLf --retry 2 "${GRAPHENEOS[OTA_URL]}" --output "${ota}.part"; then
+      rm -f "${ota}.part"
+      error "Failed to download the OTA from \`${GRAPHENEOS[OTA_URL]}\`.\n"
+      return 1
+    fi
+    mv "${ota}.part" "${ota}"
     log "OTA downloaded to: \`${ota}\`\n"
   else
     log "OTA is already downloaded in: \`${ota}\`\n"
