@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "full": {
+    "location_ota": "https://github.com/pixincreate/PixeneOS/releases/download/2026090700/cheetah-2026090700-rootless-7679976.zip",
+    "location_csig": "https://github.com/pixincreate/PixeneOS/releases/download/2026090700/cheetah-2026090700-rootless-7679976.zip.csig"
+  }
+}
