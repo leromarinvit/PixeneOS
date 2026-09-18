@@ -1,7 +1,7 @@
 {
   "version": 2,
   "full": {
-    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091000/cheetah-2026091000-magisk-v31.0-0bf11b4.zip",
-    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091000/cheetah-2026091000-magisk-v31.0-0bf11b4.zip.csig"
+    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091000/cheetah-2026091000-magisk-v31.0-3-1363da1.zip",
+    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091000/cheetah-2026091000-magisk-v31.0-3-1363da1.zip.csig"
   }
 }
