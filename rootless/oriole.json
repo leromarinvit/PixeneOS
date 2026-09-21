@@ -1,7 +1,7 @@
 {
   "version": 2,
   "full": {
-    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091900/oriole-2026091900-rootless-1363da1.zip",
-    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091900/oriole-2026091900-rootless-1363da1.zip.csig"
+    "location_ota": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091900/oriole-2026091900-rootless-104fb69.zip",
+    "location_csig": "https://github.com/leromarinvit/PixeneOS/releases/download/2026091900/oriole-2026091900-rootless-104fb69.zip.csig"
   }
 }
